@@ -94,10 +94,10 @@ breaks <- c(0,5,10,15,20,25,30,35,40,45,50,55,60, 65, 70, 75,80, 85, 90, 91)
 tags <- c("[0-4)","[5-9)", "[10-14)", "[15-19)", "[20-24)", "[25-29)","[30-34)", "[35-39)","[40-44)", "[45-49)","[50-54)", "[55-59)", "[60-64)", "[65-69)", "[70-74)","[75-79)", "[80-84)","[85-89)", "[90+)")
 
 mye_age_binned <- 
-read_excel(paste0(dir, "/input/ukpopestimatesmid2020on2021geography.xls"), sheet = "MYE2 - Females", skip = 7) %>%
+read_excel("input/ukpopestimatesmid2020on2021geography.xls", sheet = "MYE2 - Females", skip = 7) %>%
 rename_with(~ paste0("females_", .), -1:-4) %>% select(Code, contains("female")) %>%
 left_join( 
-read_excel(paste0(dir, "/input/ukpopestimatesmid2020on2021geography.xls"), sheet = "MYE2 - Males", skip = 7) %>%
+read_excel("input/ukpopestimatesmid2020on2021geography.xls", sheet = "MYE2 - Males", skip = 7) %>%
 rename_with(~ paste0("males_", .), -1:-4) %>% select(Code, contains("male"))
 ) %>%
 clean_names() %>%
@@ -116,7 +116,7 @@ clean_names() %>%
 
 # Will TBA - needs single year of age for resolution 
 
-census_age_profile <- read_excel(paste0(dir, "/input/census2021firstresultsenglandwales1.xlsx"), sheet = "P03", skip = 7) %>%
+census_age_profile <- read_excel("input/census2021firstresultsenglandwales1.xlsx", sheet = "P03", skip = 7) %>%
 clean_names() %>% 
   pivot_longer(
     cols = contains("aged"),
@@ -142,7 +142,7 @@ pivot_longer(c(census_pop_binned, mye_pop_binned), values_to = "population", nam
 
 # Set a geography (can be England/Region/LA)
 
-authority_filter <- "Cornwall"
+authority_filter <- "England" # Change this to an LTLA and then run below code
 
 mye_bin_filtered <- master_bin_long %>%
 filter(pop_source == "mye_pop_binned") %>%
@@ -152,7 +152,7 @@ mutate(
                         population*1))
 
 # Make population pyramid
-master_bin_long %>%
+p <- master_bin_long %>%
  filter(authority == authority_filter) %>%
 filter(pop_source == "census_pop_binned") %>%
 mutate(
@@ -174,5 +174,8 @@ mutate(
     scale_y_continuous(labels = scales::comma) +
     labs(fill = "Outline  = 2020 MYE population") +
     theme(legend.title=element_text(size=9))
- 
-ggsave(paste0("output/population_charts/",authority_filter,".png"))
+
+print(p) 
+ggplotly(p) # NB plotly does not render with outline 
+
+ggsave(paste0("output/",authority_filter,".png"))
